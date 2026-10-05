@@ -190,6 +190,72 @@ docker ps --filter "name=playground"
 You should see a single container named `playground-control-plane`. That
 container **is** your Kubernetes node.
 
+### Why isn't my cluster in the Docker Desktop UI?
+
+If you open Docker Desktop and click **Kubernetes** in the sidebar, you
+won't see `playground` there — and that's expected, not a bug. Docker
+Desktop's Kubernetes tab only shows/manages **its own** built-in
+single-node cluster (the one behind that screen's "Create cluster"
+button). `kind` never asks Docker Desktop to manage anything — it just
+runs Kubernetes components inside plain Docker containers, so it's
+invisible to that specific tab.
+
+To see your `kind` cluster in the GUI, click **Containers** instead —
+`playground-control-plane` shows up there like any other container.
+
+### Where does kubectl even know about this cluster?
+
+`kubectl` reads cluster definitions from `~/.kube/config`. `kind`
+automatically wrote an entry into that file when you ran
+`kind create cluster`. Look at it yourself:
+
+```bash
+cat ~/.kube/config
+```
+
+You'll see three sections — `clusters` (server address + CA cert),
+`contexts` (which cluster + which user), and `users` (credentials) — plus
+a `current-context` line at the bottom telling `kubectl` which one to use
+by default:
+
+```yaml
+contexts:
+- context:
+    cluster: kind-playground
+    user: kind-playground
+  name: kind-playground
+current-context: kind-playground
+```
+
+**Gotcha:** if you ever previously enabled Docker Desktop's own
+Kubernetes (the "Create cluster" button from the section above), you may
+also see a `docker-desktop` context in this file — even after you've
+turned that off or reinstalled Docker Desktop entirely. `kubectl config
+get-contexts` lists every cluster it's ever been told about, *not* only
+the ones currently running:
+
+```bash
+kubectl config get-contexts
+```
+
+```
+CURRENT   NAME              CLUSTER           AUTHINFO          NAMESPACE
+          docker-desktop    docker-desktop    docker-desktop
+*         kind-playground   kind-playground   kind-playground
+```
+
+The `*` marks which context is *active* — that's the one that matters.
+A context with no `*` can easily be pointing at a cluster that's long
+gone; trying to use it fails loudly, which is how you can tell:
+
+```bash
+kubectl --context docker-desktop get nodes
+# The connection to the server 127.0.0.1:... was refused
+```
+
+That's a dead context, safe to ignore or clean up with
+`kubectl config delete-context docker-desktop`.
+
 ## Step 6: Clean up (when you're done experimenting)
 
 ```bash
