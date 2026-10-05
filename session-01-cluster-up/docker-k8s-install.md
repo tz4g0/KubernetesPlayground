@@ -115,10 +115,48 @@ kubectl version --client
 kind create cluster --name playground
 ```
 
-This takes 30–60 seconds the first time (it pulls the node image). You'll
-see output ending in something like:
+⚠️ **The first run can take 10+ minutes — this is normal, not stuck.**
+`kindest/node` is a ~1.3GB image (it bundles a full Kubernetes control
+plane), so the very first pull on a fresh Docker install is the slowest
+part of this entire walkthrough by far. The spinner next to
+`Ensuring node image (kindest/node:v...) 🖼️` can sit there for several
+minutes with no visible progress bar — **let it keep running.** Every
+subsequent `kind create cluster` (even a different cluster name) reuses
+the already-pulled image and comes up in under a minute.
+
+If you want to confirm it's actually working and not frozen while you
+wait, open a second terminal and watch Docker pull the image in
+real time:
+
+```bash
+docker images   # size climbs from nothing to ~1.3GB as the pull progresses
+```
+
+```mermaid
+flowchart LR
+    A["kind create cluster<br/>(1st time ever)"] --> B{kindest/node image<br/>cached locally?}
+    B -->|No| C["Pull ~1.3GB image<br/>⏱️ ~10 min (network-dependent)"]
+    B -->|Yes| D["Reuse cached image<br/>⏱️ under 1 min"]
+    C --> E[Cluster up]
+    D --> E
+    E --> F["kind delete cluster"]
+    F -.->|image stays cached| B
+```
+
+The slow part only happens once per machine — deleting and recreating
+the cluster afterward (which you'll do constantly in this mentorship)
+stays fast because the image never goes away unless you explicitly
+`docker rmi` it.
+
+You'll see output ending in something like:
 
 ```
+ ✓ Ensuring node image (kindest/node:v1.37.0) 🖼️
+ ✓ Preparing nodes 📦
+ ✓ Writing configuration 📜
+ ✓ Starting control-plane 🕹️
+ ✓ Installing CNI 🔌
+ ✓ Installing StorageClass 💾
 Set kubectl context to "kind-playground"
 You can now use your cluster with:
 
@@ -134,11 +172,12 @@ manual context-switching needed.
 kubectl get nodes
 ```
 
-Expected output: one node, `STATUS = Ready`:
+Expected output: one node, `STATUS = Ready` (exact `VERSION` will vary —
+`kind` tracks current Kubernetes releases):
 
 ```
 NAME                       STATUS   ROLES           AGE   VERSION
-playground-control-plane   Ready    control-plane   45s   v1.31.0
+playground-control-plane   Ready    control-plane   49s   v1.37.0
 ```
 
 Also check that Docker sees it as a running container — this is the part
