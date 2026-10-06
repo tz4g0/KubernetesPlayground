@@ -8,6 +8,10 @@ what it doesn't.
 step-by-step Docker + kind + kubectl install, from a completely clean
 machine.
 
+**Troubleshooting commands:** [tshoot.md](tshoot.md) — a running log of
+useful commands for poking at the cluster (find kubelet inside the node,
+check component health, etc.). Keeps growing as we find more.
+
 ## Session flow
 
 ```mermaid
