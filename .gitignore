@@ -20,5 +20,8 @@ secrets/
 # Docker
 *.tar
 
+# Gitea runtime data (session 2)
+session-02-registry/data/
+
 # Logs
 *.log
