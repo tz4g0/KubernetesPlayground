@@ -25,6 +25,14 @@ We do it manually first so you can tell when the robot is wrong.
 | 5 | [session-05-claude-k8s-mcp](session-05-claude-k8s-mcp/) | Same loop, zero `kubectl` — Claude K8s MCP builds, pushes, deploys, scales, and debugs a sabotaged pod |
 | 6 | [session-06-off-the-laptop](session-06-off-the-laptop/) | Off the laptop — TELUS n8n, a workflow driving the cluster through MCP |
 
+## Appendix / bonus material
+
+Covered only if time allows, after the 6 core sessions.
+
+| Topic | Subject |
+|---|---|
+| [bonus-network-policy](bonus-network-policy/) | NetworkPolicy — block an attacker pod, let a frontend pod through, same port |
+
 ## Requirements
 
 - Linux command line basics
