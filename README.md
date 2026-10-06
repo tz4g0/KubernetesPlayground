@@ -31,7 +31,8 @@ Covered only if time allows, after the 6 core sessions.
 
 | Topic | Subject |
 |---|---|
-| [bonus-network-policy](bonus-network-policy/) | NetworkPolicy — block an attacker pod, let a frontend pod through, same port |
+| [bonus-network-policy.md](bonus-material/bonus-network-policy.md) | NetworkPolicy — block an attacker pod, let a frontend pod through, same port |
+| [k8s-dashboard.md](bonus-material/k8s-dashboard.md) | Kubernetes Dashboard — manual Helm install, including the chart-repo-is-down workaround |
 
 ## Requirements
 
