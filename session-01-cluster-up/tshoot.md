@@ -72,6 +72,52 @@ kubectl top pod -A
 reach for this in a real cluster without understanding what trust you're
 skipping.
 
+## Inspect etcd's Raft state
+
+Kubernetes' cluster state (every object, every status update) is persisted
+in `etcd`, a distributed key-value store built on the **Raft consensus
+algorithm**. Raft's job is to keep multiple etcd members agreeing on a
+single, ordered log of writes even if some members crash or the network
+partitions:
+
+- One member is elected **leader** for a given **term**; only the leader
+  accepts writes.
+- The leader replicates each write to a majority (**quorum**) of members
+  before considering it committed — e.g. 2 out of 3, 3 out of 5.
+- If the leader goes silent, the remaining members hold a new election and
+  bump the term.
+
+In a real HA cluster you'd run 3 or 5 etcd members so a quorum can survive a
+member going down. A `kind` cluster runs a single member — Raft is still
+technically "in charge", but with nobody to vote against, that one member is
+always leader and every write commits instantly. Zero fault tolerance: lose
+that etcd, lose the cluster's state.
+
+`etcd` itself runs as a **static pod** (`etcd-playground-control-plane`),
+scheduled directly by kubelet from a manifest file rather than through the
+API server — the standard `kubeadm`/`kind` pattern for control-plane
+components.
+
+```bash
+# 1. Find etcd's static pod + container ID
+docker exec playground-control-plane crictl ps -a --name etcd
+```
+
+```bash
+# 2. Ask etcd about its own Raft state (swap in the container ID from step 1)
+docker exec playground-control-plane crictl exec <container-id> etcdctl \
+  --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/server.crt \
+  --key=/etc/kubernetes/pki/etcd/server.key \
+  endpoint status --write-out=table
+```
+
+Look at `IS LEADER` (true — the only member, so it always wins), `RAFT TERM`
+(bumps on every re-election — ours was already at 2 after one containerd
+restart), and `RAFT APPLIED INDEX` (how many log entries have been
+committed and applied so far).
+
 ## Check control-plane component health
 
 ```bash
