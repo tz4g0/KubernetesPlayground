@@ -30,6 +30,19 @@ This matters for later exercises: if `kubelet` is "just" a systemd
 service, you could `systemctl stop kubelet` inside the node to simulate
 it going unhealthy, instead of killing the whole node container.
 
+## Checking containers in the container runtime
+
+`kind` nodes run their own container runtime (containerd) *inside* the
+node container, separate from the Docker daemon on your host. `docker
+ps` only shows the one `playground-control-plane` container — it has no
+visibility into the pods running inside it. `crictl` is the CRI-level
+tool to list those from within the node:
+
+```bash
+# 4. List all containers known to the node's container runtime (incl. stopped ones)
+docker exec playground-control-plane crictl ps -a
+```
+
 ## Check control-plane component health
 
 ```bash
