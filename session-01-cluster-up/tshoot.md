@@ -43,6 +43,35 @@ tool to list those from within the node:
 docker exec playground-control-plane crictl ps -a
 ```
 
+## Install metrics-server (for `kubectl top`)
+
+`kubectl top pod` / `kubectl top node` fail with `error: Metrics API not
+available` on a fresh `kind` cluster — metrics-server isn't installed by
+default.
+
+```bash
+# 1. Install metrics-server
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+```
+
+```bash
+# 2. Patch it to skip kubelet TLS verification — kind's kubelet certs
+#    aren't signed by a CA metrics-server trusts out of the box
+kubectl patch deployment metrics-server -n kube-system --type='json' \
+  -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
+```
+
+```bash
+# 3. Wait for rollout, then give it ~20s to scrape before testing
+kubectl rollout status deployment metrics-server -n kube-system
+kubectl top node
+kubectl top pod -A
+```
+
+`--kubelet-insecure-tls` is fine for a disposable local lab cluster. Don't
+reach for this in a real cluster without understanding what trust you're
+skipping.
+
 ## Check control-plane component health
 
 ```bash
