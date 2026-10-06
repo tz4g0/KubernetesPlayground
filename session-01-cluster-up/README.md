@@ -56,3 +56,18 @@ kindnet is the right call here — no setup tax. If you want to see a real
 CNI's NetworkPolicy enforcement in action later, `kind create cluster
 --config` supports `disableDefaultCNI: true`, letting you install Calico
 yourself instead.
+
+### And what do the managed cloud providers use?
+
+| Platform | Default CNI | Dataplane | Notes |
+|---|---|---|---|
+| **EKS** (AWS) | **Amazon VPC CNI** (`amazon-vpc-cni-k8s`) | Native VPC routing — pods get real VPC IPs from ENIs attached to the node | Not an overlay: pods are directly routable on the VPC, great for perf and hybrid/on-prem connectivity, but burns through VPC IP space fast (one ENI secondary IP per pod). NetworkPolicy isn't enforced by default — needs Calico or Cilium layered on top. |
+| **AKS** (Azure) | **Azure CNI** (kubenet is legacy/deprecated) | Native VNet routing, pods get real VNet IPs (or Azure CNI Overlay mode for IP conservation) | Same VNet-IP-space tradeoff as EKS in classic mode; "Azure CNI Overlay" decouples pod IPs from the VNet to fix that. Azure also offers **Azure CNI Powered by Cilium** for an eBPF dataplane + NetworkPolicy. |
+| **GKE** (Google) | Classic: **Calico** for NetworkPolicy on top of VPC-native routing. Newer **GKE Dataplane V2** is **Cilium-based (eBPF)**, default on new clusters | VPC-native alias IP ranges, real IPs | GKE was first of the big three to go all-in on Cilium — Dataplane V2 gives built-in NetworkPolicy + observability without a separate Calico install. |
+
+Common thread: all three diverge from `kind`'s overlay+iptables model —
+they give pods real, routable cloud-network IPs instead of a VXLAN overlay,
+since they can lean on the cloud's native VPC/VNet routing. The main
+differentiator today is Cilium adoption: GKE defaults to it, Azure offers
+it as an option, AWS leans on its own VPC CNI plus an optional Calico/
+Cilium add-on for policy.
