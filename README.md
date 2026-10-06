@@ -8,6 +8,10 @@ We do it manually first so you can tell when the robot is wrong.
 
 **Mentor:** Thiago Zago — TELUS Digital, Brazil
 
+## Presentation
+
+[Kubernetes Architecture & Core Concepts](https://docs.google.com/presentation/d/1fHOXTUUV5RYbK8uNZdJ-bduy93P_sAvz/edit?usp=sharing&ouid=113815947062823404274&rtpof=true&sd=true) — A Complete Visual Guide to the Control Plane, Worker Nodes, and Deployment Trade-offs
+
 ## Schedule
 
 6 sessions, weekly, 45 minutes each.
