@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-skaffold
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-skaffold
+  template:
+    metadata:
+      labels:
+        app: hello-skaffold
+    spec:
+      containers:
+        - name: hello-skaffold
+          image: gitea:3000/admin/hello-skaffold
+          ports:
+            - containerPort: 8080
+          env:
+            - name: APP_ENV
+              value: dev
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-skaffold
+spec:
+  selector:
+    app: hello-skaffold
+  ports:
+    - port: 80
+      targetPort: 8080

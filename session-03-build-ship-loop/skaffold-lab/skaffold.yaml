@@ -1,0 +1,33 @@
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata:
+  name: hello-skaffold
+build:
+  insecureRegistries:
+    - gitea:3000   # Gitea serves plain HTTP; Skaffold's registry client defaults to HTTPS
+  artifacts:
+    - image: gitea:3000/admin/hello-skaffold
+      context: app
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          # changes to message.txt are copied into the running container, no rebuild
+          - src: message.txt
+            dest: .
+  local:
+    push: true    # push to the local Gitea registry; the kind node pulls it from there
+test:
+  - image: gitea:3000/admin/hello-skaffold
+    custom:
+      - command: cd app && python3 test_main.py
+manifests:
+  rawYaml:
+    - k8s/*.yaml
+deploy:
+  kubectl: {}
+portForward:
+  - resourceType: service
+    resourceName: hello-skaffold
+    port: 80
+    localPort: 8080
