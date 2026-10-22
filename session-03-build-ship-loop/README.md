@@ -359,6 +359,31 @@ kubectl get all        # only the default kubernetes service should remain
 | `connection refused` on `localhost:8080` | Port-forward only exists while `skaffold dev` or `run` is running. Check that port 8080 isn't used by another process. |
 | `kubectl` talks to the wrong cluster | `kubectl config use-context kind-playground`. |
 
+### Bonus: watch the Service load-balance across replicas
+
+Scale the Deployment to 3 replicas (or set `replicas: 3` in
+`k8s/deployment.yaml`):
+
+```bash
+kubectl scale deploy/hello-skaffold --replicas=3
+kubectl get pods -l app=hello-skaffold     # wait for 3 Running pods
+```
+
+Then fire 8 requests at the Service from a throwaway pod inside the cluster:
+
+```bash
+kubectl run curl-test --image=curlimages/curl:latest --rm -i --restart=Never -- sh -c 'for i in $(seq 1 8); do curl -s  http://hello-skaffold | grep "pod"; done'
+```
+
+Expected: the pod name in the output changes between requests. This is a nice
+demonstration of load balancing in action, even though we have no "real"
+LoadBalancer Service. The plain `ClusterIP` Service is enough: `kube-proxy`
+spreads connections across all the pods behind it.
+
+Why run it from inside the cluster? `curl localhost:8080` goes through
+`skaffold`'s port-forward, which pins to a single pod, so you would see the
+same pod name every time.
+
 ## Further reading
 
 - Skaffold quickstart: <https://skaffold.dev/docs/quickstart/>
